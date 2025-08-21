@@ -32,8 +32,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      
       - name: Run tests
         run: ./gradlew test
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          DB_URL: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+          DB_USERNAME: sa
+          DB_PASSWORD: ""
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          EUREKA_DEFAULT_ZONE: http://localhost:8761/eureka/
       
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2

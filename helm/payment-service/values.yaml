@@ -1,0 +1,137 @@
+replicaCount: 3
+
+image:
+  repository: your-docker-registry.com/be-payment-service
+  pullPolicy: Always
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.yourcompany.com
+      paths:
+        - path: /payment
+          pathType: Prefix
+  tls:
+    - secretName: payment-service-tls
+      hosts:
+        - api.yourcompany.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 10
+
+env:
+  SPRING_PROFILES_ACTIVE: production
+
+secrets:
+  DB_USERNAME: payment_user
+  DB_PASSWORD: payment_pass
+  STRIPE_API_KEY: sk_test_change_me
+  STRIPE_WEBHOOK_SECRET: whsec_change_me
+
+config:
+  application.properties: |
+    server.port=8080
+    spring.application.name=payment-service
+    
+    # Database Configuration
+    spring.datasource.url=jdbc:postgresql://postgresql-service:5432/payment_db
+    spring.datasource.username=${DB_USERNAME}
+    spring.datasource.password=${DB_PASSWORD}
+    spring.jpa.hibernate.ddl-auto=update
+    spring.jpa.show-sql=false
+    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+    
+    # Kafka Configuration
+    spring.kafka.bootstrap-servers=kafka-service:9092
+    spring.kafka.consumer.group-id=payment-service-group
+    spring.kafka.consumer.auto-offset-reset=earliest
+    
+    # Stripe Configuration
+    stripe.api.key=${STRIPE_API_KEY}
+    stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
+    
+    # Eureka Configuration
+    eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka/
+    eureka.instance.prefer-ip-address=true
+    
+    # Actuator Configuration
+    management.endpoints.web.exposure.include=health,info,metrics,prometheus
+    management.endpoint.health.show-details=always

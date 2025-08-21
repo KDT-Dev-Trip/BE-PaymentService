@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(./gradlew:*)",
+      "Bash(touch:*)",
+      "Bash(curl:*)",
+      "Bash(docker build:*)",
+      "Bash(mysql:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(brew install:*)",
+      "Bash(ngrok:*)",
+      "Bash(stripe login:*)",
+      "Bash(stripe listen:*)",
+      "Bash(stripe events:*)",
+      "Bash(stripe checkout sessions:*)",
+      "Bash(stripe trigger:*)"
     ],
     "deny": []
   }

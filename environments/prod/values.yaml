@@ -1,0 +1,89 @@
+replicaCount: 3
+
+image:
+  repository: your-docker-registry.com/be-payment-service
+  tag: "prod-latest"
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+  hosts:
+    - host: api.yourcompany.com
+      paths:
+        - path: /payment
+          pathType: Prefix
+  tls:
+    - secretName: payment-service-prod-tls
+      hosts:
+        - api.yourcompany.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+env:
+  SPRING_PROFILES_ACTIVE: production
+
+secrets:
+  DB_USERNAME: prod_payment_user
+  DB_PASSWORD: prod_payment_secure_pass
+  STRIPE_API_KEY: sk_live_production_key
+  STRIPE_WEBHOOK_SECRET: whsec_production_secret
+
+config:
+  application.properties: |
+    server.port=8080
+    spring.application.name=payment-service
+    
+    # Database Configuration
+    spring.datasource.url=jdbc:postgresql://postgresql-prod:5432/payment_db_prod
+    spring.datasource.username=${DB_USERNAME}
+    spring.datasource.password=${DB_PASSWORD}
+    spring.jpa.hibernate.ddl-auto=validate
+    spring.jpa.show-sql=false
+    
+    # Connection Pool Settings
+    spring.datasource.hikari.maximum-pool-size=20
+    spring.datasource.hikari.minimum-idle=5
+    spring.datasource.hikari.connection-timeout=20000
+    spring.datasource.hikari.idle-timeout=300000
+    spring.datasource.hikari.max-lifetime=1200000
+    
+    # Kafka Configuration
+    spring.kafka.bootstrap-servers=kafka-prod:9092
+    spring.kafka.consumer.group-id=payment-service-prod-group
+    spring.kafka.producer.retries=3
+    spring.kafka.producer.acks=all
+    
+    # Stripe Configuration (Live Mode)
+    stripe.api.key=${STRIPE_API_KEY}
+    stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
+    
+    # Eureka Configuration
+    eureka.client.service-url.defaultZone=http://eureka-prod:8761/eureka/
+    eureka.instance.prefer-ip-address=true
+    eureka.instance.lease-renewal-interval-in-seconds=30
+    
+    # Actuator Configuration
+    management.endpoints.web.exposure.include=health,info,metrics,prometheus
+    management.endpoint.health.show-details=never
+    management.metrics.export.prometheus.enabled=true
+    
+    # Logging Configuration
+    logging.level.ac.su.kdt.bepaymentservice=WARN
+    logging.level.org.springframework.security=WARN
+    logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n

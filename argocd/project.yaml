@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: payment-service-project
+  namespace: argocd
+spec:
+  description: Payment Service Project
+  sourceRepos:
+  - 'https://github.com/your-org/BE-PaymentService.git'
+  - 'https://charts.bitnami.com/bitnami'
+  destinations:
+  - namespace: payment-service
+    server: https://kubernetes.default.svc
+  - namespace: argocd
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  - group: ''
+    kind: Node
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRole
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding
+  namespaceResourceWhitelist:
+  - group: ''
+    kind: ConfigMap
+  - group: ''
+    kind: Secret
+  - group: ''
+    kind: Service
+  - group: ''
+    kind: ServiceAccount
+  - group: apps
+    kind: Deployment
+  - group: apps
+    kind: ReplicaSet
+  - group: autoscaling
+    kind: HorizontalPodAutoscaler
+  - group: networking.k8s.io
+    kind: Ingress
+  - group: networking.k8s.io
+    kind: NetworkPolicy
+  roles:
+  - name: payment-service-admin
+    description: Admin access to payment service
+    policies:
+    - p, proj:payment-service-project:payment-service-admin, applications, *, payment-service-project/*, allow
+    - p, proj:payment-service-project:payment-service-admin, repositories, *, *, allow
+    groups:
+    - payment-service-team

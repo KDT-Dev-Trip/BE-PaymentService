@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payment-service-config
+  namespace: payment-service
+data:
+  application.properties: |
+    server.port=8080
+    spring.application.name=payment-service
+    
+    # Database Configuration
+    spring.datasource.url=jdbc:postgresql://postgresql-service:5432/payment_db
+    spring.datasource.username=${DB_USERNAME}
+    spring.datasource.password=${DB_PASSWORD}
+    spring.jpa.hibernate.ddl-auto=update
+    spring.jpa.show-sql=false
+    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+    
+    # Kafka Configuration
+    spring.kafka.bootstrap-servers=kafka-service:9092
+    spring.kafka.consumer.group-id=payment-service-group
+    spring.kafka.consumer.auto-offset-reset=earliest
+    
+    # Stripe Configuration
+    stripe.api.key=${STRIPE_API_KEY}
+    stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
+    
+    # Eureka Configuration
+    eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka/
+    eureka.instance.prefer-ip-address=true
+    
+    # Actuator Configuration
+    management.endpoints.web.exposure.include=health,info,metrics,prometheus
+    management.endpoint.health.show-details=always

@@ -1,0 +1,68 @@
+replicaCount: 2
+
+image:
+  repository: your-docker-registry.com/be-payment-service
+  tag: "staging-latest"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: api-staging.yourcompany.com
+      paths:
+        - path: /payment
+          pathType: Prefix
+  tls:
+    - secretName: payment-service-staging-tls
+      hosts:
+        - api-staging.yourcompany.com
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 768Mi
+  requests:
+    cpu: 150m
+    memory: 384Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+env:
+  SPRING_PROFILES_ACTIVE: staging
+
+secrets:
+  DB_USERNAME: staging_payment_user
+  DB_PASSWORD: staging_payment_pass
+  STRIPE_API_KEY: sk_test_staging_key
+  STRIPE_WEBHOOK_SECRET: whsec_staging_secret
+
+config:
+  application.properties: |
+    server.port=8080
+    spring.application.name=payment-service
+    
+    # Database Configuration
+    spring.datasource.url=jdbc:postgresql://postgresql-staging:5432/payment_db_staging
+    spring.datasource.username=${DB_USERNAME}
+    spring.datasource.password=${DB_PASSWORD}
+    spring.jpa.hibernate.ddl-auto=validate
+    spring.jpa.show-sql=false
+    
+    # Kafka Configuration
+    spring.kafka.bootstrap-servers=kafka-staging:9092
+    spring.kafka.consumer.group-id=payment-service-staging-group
+    
+    # Stripe Configuration
+    stripe.api.key=${STRIPE_API_KEY}
+    stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
+    
+    # Eureka Configuration
+    eureka.client.service-url.defaultZone=http://eureka-staging:8761/eureka/
+    
+    # Actuator Configuration
+    management.endpoints.web.exposure.include=health,info,metrics,prometheus
+    management.endpoint.health.show-details=when_authorized
+    logging.level.ac.su.kdt.bepaymentservice=INFO

@@ -37,19 +37,9 @@ public class StripeWebhookController {
         
         try {
             // Verify webhook signature
-            log.info("Webhook received - signature: {}", sigHeader);
-            log.info("Webhook secret configured: {}", webhookSecret.substring(0, 10) + "...");
-            log.info("Payload length: {}", payload.length());
-            
-            // For testing, skip signature verification and parse JSON directly
-            com.google.gson.Gson gson = new com.google.gson.Gson();
-            com.google.gson.JsonObject jsonObject = gson.fromJson(payload, com.google.gson.JsonObject.class);
-            String eventType = jsonObject.get("type").getAsString();
-            
-            log.info("Event type received: {}", eventType);
-            
-            // Create a mock event for testing
-            event = Event.fromJson(payload);
+            log.info("Webhook received - signature: {}, payload length: {}", sigHeader, payload.length());
+            event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
+            log.info("Event type: {}", event.getType());
         } catch (SignatureVerificationException e) {
             log.error("Invalid signature on Stripe webhook: {}", e.getMessage());
             log.error("Expected secret starts with: {}", webhookSecret.substring(0, 10) + "...");

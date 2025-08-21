@@ -16,7 +16,8 @@
       "Bash(stripe listen:*)",
       "Bash(stripe events:*)",
       "Bash(stripe checkout sessions:*)",
-      "Bash(stripe trigger:*)"
+      "Bash(stripe trigger:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }

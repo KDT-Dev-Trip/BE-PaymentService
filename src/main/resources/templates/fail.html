@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>결제 실패</title>
+    <style>
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        .fail-box { 
+            background: #fff5f5; 
+            padding: 30px; 
+            border-radius: 8px; 
+            border: 2px solid #e53e3e; 
+        }
+        .fail-icon { 
+            font-size: 48px; 
+            color: #e53e3e; 
+            margin-bottom: 20px; 
+        }
+        .error-details { 
+            background: #f9f9f9; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
+            text-align: left; 
+        }
+        .retry-button { 
+            padding: 15px 30px; 
+            background: #3182f6; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin: 10px; 
+        }
+        .home-button { 
+            padding: 15px 30px; 
+            background: #666; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin: 10px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="fail-box">
+        <div class="fail-icon">❌</div>
+        <h1>결제에 실패했습니다</h1>
+        <p>결제 처리 중 문제가 발생했습니다.</p>
+        
+        <div class="error-details">
+            <h3>오류 정보</h3>
+            <p><strong>주문번호:</strong> <span th:text="${orderId}"></span></p>
+            <p><strong>오류 코드:</strong> <span th:text="${errorCode}"></span></p>
+            <p><strong>오류 메시지:</strong> <span th:text="${errorMessage}"></span></p>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <button class="retry-button" onclick="retryPayment()">다시 결제하기</button>
+            <button class="home-button" onclick="goHome()">홈으로 돌아가기</button>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function retryPayment() {
+            // 새로운 주문 ID로 결제 페이지로 이동
+            const newOrderId = "order_" + Date.now();
+            window.location.href = "/payment/checkout?orderId=" + newOrderId;
+        }
+        
+        function goHome() {
+            window.location.href = "/";
+        }
+    </script>
+</body>
+</html>

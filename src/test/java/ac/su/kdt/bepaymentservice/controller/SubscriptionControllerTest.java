@@ -7,7 +7,6 @@ import ac.su.kdt.bepaymentservice.entity.Subscription;
 import ac.su.kdt.bepaymentservice.entity.SubscriptionPlan;
 import ac.su.kdt.bepaymentservice.service.SubscriptionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stripe.exception.StripeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -152,20 +151,20 @@ class SubscriptionControllerTest {
     }
     
     @Test
-    @DisplayName("Stripe 에러 발생 시 500 에러를 반환한다")
+    @DisplayName("TossPayments 미구현 기능 호출 시 501 에러를 반환한다")
     void createCheckoutSession_StripeException_Returns500() throws Exception {
         // Given
         createRequest.setSuccessUrl("https://example.com/success");
         createRequest.setCancelUrl("https://example.com/cancel");
         
         given(subscriptionService.createCheckoutSession(any(CreateSubscriptionRequest.class)))
-                .willThrow(new StripeException("Stripe API error", "api_error", null, 500) {});
+                .willThrow(new UnsupportedOperationException("TossPayments checkout not implemented yet"));
         
         // When & Then
         mockMvc.perform(post("/api/v1/subscriptions/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotImplemented());
         
         verify(subscriptionService).createCheckoutSession(any(CreateSubscriptionRequest.class));
     }

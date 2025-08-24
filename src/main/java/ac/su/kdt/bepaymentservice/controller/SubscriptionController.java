@@ -4,7 +4,6 @@ import ac.su.kdt.bepaymentservice.dto.CreateSubscriptionRequest;
 import ac.su.kdt.bepaymentservice.dto.SubscriptionDto;
 import ac.su.kdt.bepaymentservice.service.SubscriptionService;
 import ac.su.kdt.bepaymentservice.util.GatewayAuthUtils;
-import com.stripe.exception.StripeException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,9 +41,9 @@ public class SubscriptionController {
         try {
             String checkoutUrl = subscriptionService.createCheckoutSession(request);
             return ResponseEntity.ok(Map.of("checkoutUrl", checkoutUrl));
-        } catch (StripeException e) {
-            log.error("Stripe error creating checkout session: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
+        } catch (UnsupportedOperationException e) {
+            log.error("TossPayments checkout not implemented: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
         } catch (IllegalArgumentException e) {
             log.error("Error creating checkout session: {}", e.getMessage());
             return ResponseEntity.badRequest().build();

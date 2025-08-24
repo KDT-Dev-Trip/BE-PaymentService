@@ -33,11 +33,12 @@ class SubscriptionServiceTest {
     @Mock
     private SubscriptionPlanRepository subscriptionPlanRepository;
     
-    @Mock
-    private StripeService stripeService;
     
     @Mock
     private PaymentEventService paymentEventService;
+    
+    @Mock
+    private ac.su.kdt.bepaymentservice.metrics.PaymentMetrics paymentMetrics;
     
     @InjectMocks
     private SubscriptionService subscriptionService;

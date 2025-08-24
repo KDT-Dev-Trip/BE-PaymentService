@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>결제 성공</title>
+    <script src="https://js.tosspayments.com/v1/payment-widget"></script>
+    <style>
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        .success-box { 
+            background: #f0f8ff; 
+            padding: 30px; 
+            border-radius: 8px; 
+            border: 2px solid #3182f6; 
+        }
+        .success-icon { 
+            font-size: 48px; 
+            color: #3182f6; 
+            margin-bottom: 20px; 
+        }
+        .payment-details { 
+            background: #f9f9f9; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
+            text-align: left; 
+        }
+        .confirm-button { 
+            padding: 15px 30px; 
+            background: #3182f6; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-top: 20px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="success-box">
+        <div class="success-icon">✅</div>
+        <h1>결제가 완료되었습니다!</h1>
+        <p>결제 승인 처리를 진행합니다...</p>
+        
+        <div class="payment-details">
+            <h3>결제 정보</h3>
+            <p><strong>주문번호:</strong> <span th:text="${orderId}"></span></p>
+            <p><strong>결제키:</strong> <span th:text="${paymentKey}"></span></p>
+            <p><strong>결제금액:</strong> <span th:text="${#numbers.formatInteger(amount, 0, 'COMMA')}"></span>원</p>
+            <p id="payment-status"><strong>상태:</strong> 승인 처리 중...</p>
+        </div>
+        
+        <button class="confirm-button" onclick="confirmPayment()" id="confirm-btn">결제 승인</button>
+    </div>
+
+    <script th:inline="javascript">
+        async function confirmPayment() {
+            const paymentKey = [[${paymentKey}]];
+            const orderId = [[${orderId}]];
+            const amount = [[${amount}]];
+            
+            try {
+                document.getElementById("confirm-btn").disabled = true;
+                document.getElementById("confirm-btn").textContent = "처리 중...";
+                
+                const response = await fetch('/api/toss/payments/confirm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentKey: paymentKey,
+                        orderId: orderId,
+                        amount: amount
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById("payment-status").innerHTML = 
+                        '<strong>상태:</strong> <span style="color: green;">결제 승인 완료</span>';
+                    document.getElementById("confirm-btn").textContent = "완료";
+                    alert('결제가 성공적으로 완료되었습니다!');
+                } else {
+                    throw new Error('결제 승인 실패');
+                }
+            } catch (error) {
+                console.error('결제 승인 중 오류 발생:', error);
+                document.getElementById("payment-status").innerHTML = 
+                    '<strong>상태:</strong> <span style="color: red;">결제 승인 실패</span>';
+                document.getElementById("confirm-btn").disabled = false;
+                document.getElementById("confirm-btn").textContent = "다시 시도";
+                alert('결제 승인 중 오류가 발생했습니다.');
+            }
+        }
+        
+        // 페이지 로드 시 자동으로 결제 승인 시도
+        window.onload = function() {
+            setTimeout(confirmPayment, 1000);
+        };
+    </script>
+</body>
+</html>

@@ -7,9 +7,6 @@ import ac.su.kdt.bepaymentservice.entity.SubscriptionPlan;
 import ac.su.kdt.bepaymentservice.repository.SubscriptionPlanRepository;
 import ac.su.kdt.bepaymentservice.repository.SubscriptionRepository;
 import ac.su.kdt.bepaymentservice.metrics.PaymentMetrics;
-import com.stripe.exception.StripeException;
-import com.stripe.model.Customer;
-import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +25,6 @@ public class SubscriptionService {
     
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
-    private final StripeService stripeService;
     private final PaymentEventService paymentEventService;
     private final PaymentMetrics paymentMetrics;
     
@@ -115,31 +111,8 @@ public class SubscriptionService {
         return SubscriptionDto.fromEntity(subscription);
     }
     
-    public String createCheckoutSession(CreateSubscriptionRequest request) throws StripeException {
-        log.info("Creating checkout session for user: {} with plan: {}", request.getUserId(), request.getPlanId());
-        
-        SubscriptionPlan plan = subscriptionPlanRepository.findById(request.getPlanId())
-            .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found"));
-        
-        String priceId = request.getBillingCycle() == Subscription.BillingCycle.YEARLY
-            ? plan.getStripePriceIdYearly() : plan.getStripePriceIdMonthly();
-        
-        if (priceId == null) {
-            throw new IllegalStateException("Stripe price ID not configured for this plan and billing cycle");
-        }
-        
-        // Create or get customer
-        String customerId = getOrCreateStripeCustomer(request.getUserId());
-        
-        Session session = stripeService.createCheckoutSession(
-            customerId, 
-            priceId, 
-            request.getSuccessUrl(), 
-            request.getCancelUrl(), 
-            request.getUserId()
-        );
-        
-        return session.getUrl();
+    public String createCheckoutSession(CreateSubscriptionRequest request) {
+        throw new UnsupportedOperationException("TossPayments checkout session not implemented yet");
     }
     
     public SubscriptionDto getUserActiveSubscription(Long userId) {
@@ -194,15 +167,6 @@ public class SubscriptionService {
         return SubscriptionDto.fromEntity(subscription);
     }
     
-    private String getOrCreateStripeCustomer(Long userId) throws StripeException {
-        // In a real implementation, you would fetch user details from user service
-        // For now, we'll create a basic customer
-        String email = "user" + userId + "@example.com";
-        String name = "User " + userId;
-        
-        Customer customer = stripeService.createCustomer(email, name, userId);
-        return customer.getId();
-    }
     
     public void processExpiredSubscriptions() {
         LocalDateTime now = LocalDateTime.now();

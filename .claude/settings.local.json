@@ -17,7 +17,13 @@
       "Bash(stripe events:*)",
       "Bash(stripe checkout sessions:*)",
       "Bash(stripe trigger:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Read(//Users/symoon/IdeaProjects/workspace/BE-AuthenticationService/**)",
+      "Bash(wget:*)",
+      "Bash(python3:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.tosspayments.com)",
+      "WebFetch(domain:velog.io)"
     ],
     "deny": []
   }

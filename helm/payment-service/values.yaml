@@ -30,7 +30,7 @@ securityContext:
 service:
   type: ClusterIP
   port: 80
-  targetPort: 8080
+  targetPort: 8081
 
 ingress:
   enabled: true
@@ -103,35 +103,8 @@ env:
 secrets:
   DB_USERNAME: payment_user
   DB_PASSWORD: payment_pass
-  STRIPE_API_KEY: sk_test_change_me
-  STRIPE_WEBHOOK_SECRET: whsec_change_me
-
-config:
-  application.properties: |
-    server.port=8080
-    spring.application.name=payment-service
-    
-    # Database Configuration
-    spring.datasource.url=jdbc:postgresql://postgresql-service:5432/payment_db
-    spring.datasource.username=${DB_USERNAME}
-    spring.datasource.password=${DB_PASSWORD}
-    spring.jpa.hibernate.ddl-auto=update
-    spring.jpa.show-sql=false
-    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-    
-    # Kafka Configuration
-    spring.kafka.bootstrap-servers=kafka-service:9092
-    spring.kafka.consumer.group-id=payment-service-group
-    spring.kafka.consumer.auto-offset-reset=earliest
-    
-    # Stripe Configuration
-    stripe.api.key=${STRIPE_API_KEY}
-    stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
-    
-    # Eureka Configuration
-    eureka.client.service-url.defaultZone=http://eureka-server:8761/eureka/
-    eureka.instance.prefer-ip-address=true
-    
-    # Actuator Configuration
-    management.endpoints.web.exposure.include=health,info,metrics,prometheus
-    management.endpoint.health.show-details=always
+  TOSS_PAYMENTS_CLIENT_KEY: test_ck_yZqmkKeP8gJoxxW7gzz4rbQRxB9l
+  TOSS_PAYMENTS_SECRET_KEY: test_sk_24xLea5zVAkeX7pqXzgY8QAMYNwW
+  DB_URL: jdbc:postgresql://postgresql-service:5432/payment_db
+  KAFKA_BOOTSTRAP_SERVERS: kafka-service:9092
+  EUREKA_DEFAULT_ZONE: http://eureka-server:8761/eureka/

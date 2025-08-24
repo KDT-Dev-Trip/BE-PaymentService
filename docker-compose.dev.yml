@@ -4,13 +4,16 @@ services:
   payment-service:
     build: .
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+      - DB_URL=jdbc:postgresql://postgres:5432/payment_db_dev
       - DB_USERNAME=dev_user
       - DB_PASSWORD=dev_pass
-      - STRIPE_API_KEY=sk_test_dev
-      - STRIPE_WEBHOOK_SECRET=whsec_dev
+      - TOSS_PAYMENTS_CLIENT_KEY=${TOSS_PAYMENTS_CLIENT_KEY}
+      - TOSS_PAYMENTS_SECRET_KEY=${TOSS_PAYMENTS_SECRET_KEY}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
     depends_on:
       - postgres
       - kafka

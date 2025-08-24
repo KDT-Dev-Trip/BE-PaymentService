@@ -33,33 +33,8 @@ env:
 secrets:
   DB_USERNAME: dev_payment_user
   DB_PASSWORD: dev_payment_pass
-  STRIPE_API_KEY: sk_test_dev_key
-  STRIPE_WEBHOOK_SECRET: whsec_dev_secret
-
-config:
-  application.properties: |
-    server.port=8080
-    spring.application.name=payment-service
-    
-    # Database Configuration
-    spring.datasource.url=jdbc:postgresql://postgresql-dev:5432/payment_db_dev
-    spring.datasource.username=${DB_USERNAME}
-    spring.datasource.password=${DB_PASSWORD}
-    spring.jpa.hibernate.ddl-auto=create-drop
-    spring.jpa.show-sql=true
-    
-    # Kafka Configuration
-    spring.kafka.bootstrap-servers=kafka-dev:9092
-    spring.kafka.consumer.group-id=payment-service-dev-group
-    
-    # Stripe Configuration (Test Mode)
-    stripe.api.key=${STRIPE_API_KEY}
-    stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET}
-    
-    # Eureka Configuration
-    eureka.client.service-url.defaultZone=http://eureka-dev:8761/eureka/
-    
-    # Actuator Configuration
-    management.endpoints.web.exposure.include=*
-    management.endpoint.health.show-details=always
-    logging.level.ac.su.kdt.bepaymentservice=DEBUG
+  TOSS_PAYMENTS_CLIENT_KEY: test_ck_yZqmkKeP8gJoxxW7gzz4rbQRxB9l
+  TOSS_PAYMENTS_SECRET_KEY: test_sk_24xLea5zVAkeX7pqXzgY8QAMYNwW
+  DB_URL: jdbc:postgresql://postgresql-dev:5432/payment_db_dev
+  KAFKA_BOOTSTRAP_SERVERS: kafka-dev:9092
+  EUREKA_DEFAULT_ZONE: http://eureka-dev:8761/eureka/

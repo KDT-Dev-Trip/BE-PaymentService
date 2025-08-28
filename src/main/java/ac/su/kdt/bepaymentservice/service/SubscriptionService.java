@@ -27,6 +27,7 @@ public class SubscriptionService {
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final PaymentEventService paymentEventService;
     private final PaymentMetrics paymentMetrics;
+    private final PaymentEventPublisher paymentEventPublisher;
     
     public SubscriptionDto createSubscription(CreateSubscriptionRequest request) {
         log.info("Creating subscription for user: {} with plan: {}", request.getUserId(), request.getPlanId());
@@ -194,5 +195,100 @@ public class SubscriptionService {
             log.info("Subscription expiring in {} days: {} for user: {}", 
                     daysBeforeExpiry, subscription.getId(), subscription.getUserId());
         }
+    }
+    
+    @Transactional
+    public SubscriptionDto changeSubscriptionPlan(Long subscriptionId, Long newPlanId, String changeReason) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+            .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+        
+        SubscriptionPlan newPlan = subscriptionPlanRepository.findById(newPlanId)
+            .orElseThrow(() -> new IllegalArgumentException("New subscription plan not found"));
+        
+        if (!newPlan.getIsActive()) {
+            throw new IllegalArgumentException("New subscription plan is not active");
+        }
+        
+        // Store old plan details for event
+        SubscriptionPlan oldPlan = subscription.getPlan();
+        String oldPlanName = oldPlan.getPlanName();
+        String newPlanName = newPlan.getPlanName();
+        Double oldPrice = subscription.getAmount().doubleValue();
+        
+        // Calculate new amount based on billing cycle
+        BigDecimal newAmount = subscription.getBillingCycle() == Subscription.BillingCycle.YEARLY
+            ? newPlan.getYearlyPrice() : newPlan.getMonthlyPrice();
+        Double newPrice = newAmount.doubleValue();
+        
+        // Calculate prorated amount (simple example - actual logic would be more complex)
+        boolean isProratedRefund = oldPrice > newPrice;
+        Double proratedAmount = isProratedRefund ? (oldPrice - newPrice) * 0.5 : null;
+        
+        // Update subscription
+        subscription.setPlan(newPlan);
+        subscription.setAmount(newAmount);
+        subscription = subscriptionRepository.save(subscription);
+        
+        // Publish subscription changed event
+        try {
+            String userEmail = "user" + subscription.getUserId() + "@example.com"; // Placeholder
+            String authUserId = subscription.getUserId().toString(); // Placeholder
+            
+            paymentEventPublisher.publishSubscriptionChanged(
+                subscription.getUserId(),
+                authUserId,
+                userEmail,
+                oldPlanName,
+                newPlanName,
+                changeReason != null ? changeReason : "USER_CHANGE",
+                oldPrice,
+                newPrice,
+                subscription.getCurrency(),
+                isProratedRefund,
+                proratedAmount
+            );
+        } catch (Exception e) {
+            log.error("Failed to publish subscription changed event for subscription {}", subscriptionId, e);
+        }
+        
+        log.info("Changed subscription plan: {} from {} to {} for user: {}", 
+                subscriptionId, oldPlanName, newPlanName, subscription.getUserId());
+        
+        return SubscriptionDto.fromEntity(subscription);
+    }
+    
+    @Transactional
+    public void handleRenewalFailure(Long subscriptionId, String failureReason, String paymentMethod, int retryCount) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+            .orElseThrow(() -> new IllegalArgumentException("Subscription not found"));
+        
+        // Update subscription status if max retries exceeded
+        if (retryCount >= 3) {
+            subscription.setStatus(Subscription.SubscriptionStatus.PAYMENT_FAILED);
+            subscriptionRepository.save(subscription);
+        }
+        
+        // Publish renewal failed event
+        try {
+            String userEmail = "user" + subscription.getUserId() + "@example.com"; // Placeholder
+            String authUserId = subscription.getUserId().toString(); // Placeholder
+            
+            paymentEventPublisher.publishRenewalFailed(
+                subscription.getUserId(),
+                authUserId,
+                userEmail,
+                subscription.getPlan().getPlanName(),
+                failureReason,
+                paymentMethod,
+                subscription.getAmount().doubleValue(),
+                subscription.getCurrency(),
+                retryCount
+            );
+        } catch (Exception e) {
+            log.error("Failed to publish subscription renewal failed event for subscription {}", subscriptionId, e);
+        }
+        
+        log.error("Subscription renewal failed: {} for user: {}, reason: {}, retry count: {}", 
+                subscriptionId, subscription.getUserId(), failureReason, retryCount);
     }
 }

@@ -28,6 +28,7 @@ public class TicketService {
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentEventService paymentEventService;
     private final PaymentMetrics paymentMetrics;
+    private final PaymentEventPublisher paymentEventPublisher;
     
     public TicketDto getUserTickets(Long userId) {
         UserTicket userTicket = userTicketRepository.findByUserId(userId)
@@ -66,6 +67,9 @@ public class TicketService {
         
         // Publish ticket used event
         paymentEventService.publishTicketsUsed(userId, ticketsToUse, userTicket.getCurrentTickets());
+        
+        // Check if balance is low and publish event if needed
+        checkAndPublishLowBalanceEvent(userTicket);
         
         log.info("User {} used {} tickets. Balance: {} -> {}", 
                 userId, ticketsToUse, balanceBefore, userTicket.getCurrentTickets());
@@ -180,6 +184,49 @@ public class TicketService {
     
     private void updateNextRefillTime(UserTicket userTicket, int intervalHours) {
         userTicket.setNextRefillAt(LocalDateTime.now().plusHours(intervalHours));
+    }
+    
+    private void checkAndPublishLowBalanceEvent(UserTicket userTicket) {
+        // Get user's subscription to determine threshold
+        List<Subscription.SubscriptionStatus> activeStatuses = List.of(
+            Subscription.SubscriptionStatus.ACTIVE,
+            Subscription.SubscriptionStatus.TRIAL
+        );
+        
+        List<Subscription> activeSubscriptions = subscriptionRepository
+            .findByUserIdAndStatusInOrderByCreatedAtDesc(userTicket.getUserId(), activeStatuses);
+        
+        if (activeSubscriptions.isEmpty()) {
+            return; // No subscription, skip low balance check
+        }
+        
+        Subscription activeSubscription = activeSubscriptions.get(0);
+        SubscriptionPlan plan = activeSubscription.getPlan();
+        
+        // Consider balance low if less than 20% of ticket limit or less than 5 tickets
+        int thresholdLimit = Math.max(5, (int)(plan.getTicketLimit() * 0.2));
+        
+        if (userTicket.getCurrentTickets() <= thresholdLimit) {
+            try {
+                // Find user email - this would typically come from a user service call
+                String userEmail = "user" + userTicket.getUserId() + "@example.com"; // Placeholder
+                String authUserId = userTicket.getUserId().toString(); // Placeholder
+                
+                paymentEventPublisher.publishTicketBalanceLow(
+                    userTicket.getUserId(),
+                    authUserId,
+                    userEmail,
+                    userTicket.getCurrentTickets(),
+                    thresholdLimit,
+                    plan.getPlanName(),
+                    userTicket.getLastTicketRefill(),
+                    false, // Auto-recharge not implemented yet
+                    plan.getTicketRefillAmount()
+                );
+            } catch (Exception e) {
+                log.error("Failed to publish ticket balance low event for user {}", userTicket.getUserId(), e);
+            }
+        }
     }
     
     private UserTicket createUserTicket(Long userId) {

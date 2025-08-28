@@ -99,7 +99,8 @@ public class Subscription {
         TRIAL,
         PAST_DUE,
         INCOMPLETE,
-        INCOMPLETE_EXPIRED
+        INCOMPLETE_EXPIRED,
+        PAYMENT_FAILED
     }
     
     public enum BillingCycle {

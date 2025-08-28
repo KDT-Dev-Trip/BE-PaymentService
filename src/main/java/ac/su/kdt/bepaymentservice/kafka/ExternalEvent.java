@@ -35,6 +35,8 @@ public class ExternalEvent {
     
     public enum EventType {
         USER_REGISTERED("user.registered"),
+        USER_SIGNED_UP("user.signed-up"),
+        FULL_SYNC("full.sync"),
         MISSION_COMPLETED("mission.completed"),
         TEAM_CREATED("team.created"),
         ACHIEVEMENT_UNLOCKED("achievement.unlocked");

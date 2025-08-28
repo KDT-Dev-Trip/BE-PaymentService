@@ -6,59 +6,14 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - DB_URL=jdbc:postgresql://postgres:5432/payment_db_dev
-      - DB_USERNAME=dev_user
-      - DB_PASSWORD=dev_pass
+      - SPRING_PROFILES_ACTIVE=local
+      - DB_URL=jdbc:mysql://host.docker.internal:3306/devops_platform_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      - DB_USERNAME=root
+      - DB_PASSWORD=1111
       - TOSS_PAYMENTS_CLIENT_KEY=${TOSS_PAYMENTS_CLIENT_KEY}
       - TOSS_PAYMENTS_SECRET_KEY=${TOSS_PAYMENTS_SECRET_KEY}
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - EUREKA_DEFAULT_ZONE=http://eureka-server:8761/eureka/
-    depends_on:
-      - postgres
-      - kafka
-    networks:
-      - payment-network
-
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=payment_db_dev
-      - POSTGRES_USER=dev_user
-      - POSTGRES_PASSWORD=dev_pass
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - payment-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.4.0
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
-    networks:
-      - payment-network
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.4.0
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "2181:2181"
-    networks:
-      - payment-network
-
-volumes:
-  postgres_data:
-
-networks:
-  payment-network:
-    driver: bridge
+      - TOSS_PAYMENTS_SECURITY_KEY=${TOSS_PAYMENTS_SECURITY_KEY}
+      - KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:9092
+      - EUREKA_DEFAULT_ZONE=http://host.docker.internal:8761/eureka/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

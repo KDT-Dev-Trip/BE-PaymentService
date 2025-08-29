@@ -15,6 +15,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+// 결제 이벤트 서비스
+// 결제 이벤트 서비스는 결제 이벤트를 처리하는 데 사용됩니다.
+// 이벤트는 구독 생성, 구독 취소, 구독 만료, 구독 상태 업데이트, 결제 성공, 결제 실패, 티켓 사용, 티켓 환불, 티켓 충전 등의 정보를 포함합니다.
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

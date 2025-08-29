@@ -17,6 +17,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// 구독 서비스
+// 구독 서비스는 구독 관련 기능을 제공하는 데 사용됩니다.
+// 이벤트는 구독 생성, 구독 취소, 구독 플랜 변경, 구독 갱신 실패 등의 정보를 포함합니다.
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

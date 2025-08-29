@@ -17,6 +17,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 
+// TossPayments 서비스
+// TossPayments 서비스는 TossPayments API를 호출하는 데 사용됩니다.
+// 이벤트는 결제 성공, 결제 실패, 구독 결제, 티켓 구매 등의 정보를 포함합니다.
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

@@ -83,8 +83,8 @@ public class HealthController {
             "service", "DevOps Platform Payment Service",
             "description", "결제, 구독, 티켓 관리 서비스",
             "endpoints", Map.of(
-                "subscriptions", "/api/v1/subscriptions",
-                "tickets", "/api/v1/tickets",
+                "subscriptions", "/api/subscriptions",
+                "tickets", "/api/tickets",
                 "health", "/api/health",
                 "healthV1", "/api/v1/health"
             ),

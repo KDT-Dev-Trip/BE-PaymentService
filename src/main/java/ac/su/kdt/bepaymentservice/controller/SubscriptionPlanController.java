@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/subscription-plans")
+@RequestMapping("/api/subscription-plans")
 @RequiredArgsConstructor
 @Slf4j
 public class SubscriptionPlanController {

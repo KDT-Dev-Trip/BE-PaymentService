@@ -48,6 +48,7 @@ public class TossPaymentsController {
         }
     }
     
+    // 체크아웃 요청을 받아서 토스페이먼츠 서버에 결제 요청을 보내고 결과를 반환
     @PostMapping("/payments/checkout")
     public ResponseEntity<CheckoutResponse> createCheckout(@RequestBody CheckoutRequest request) {
         log.info("Checkout request received for amount: {}, orderId: {}", 
@@ -61,7 +62,7 @@ public class TossPaymentsController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+
     @PostMapping("/payments/confirm")
     public ResponseEntity<PaymentResponse> confirmPayment(@RequestBody ConfirmRequest request) {
         log.info("Payment confirmation request received for paymentKey: {}", request.getPaymentKey());

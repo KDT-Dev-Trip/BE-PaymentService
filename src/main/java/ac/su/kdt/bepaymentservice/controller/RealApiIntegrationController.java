@@ -42,16 +42,16 @@ public class RealApiIntegrationController {
         try {
             // 1. 사용 전 티켓 상태 확인
             TicketDto beforeUsage = ticketService.getUserTickets(userId);
-            log.info("📊 Before usage - User: {}, Current: {}, Max: {}", 
-                    userId, beforeUsage.getCurrentTickets(), beforeUsage.getMaxTickets());
+            log.info("📊 Before usage - User: {}, Current: {}", 
+                    userId, beforeUsage.getCurrentTickets());
             
             // 2. 실제 티켓 사용 (이 과정에서 잔액 부족 이벤트가 자동 발행될 수 있음)
             boolean success = ticketService.useTickets(userId, ticketsToUse, 999L, "Real API integration test mission");
             
             // 3. 사용 후 티켓 상태 확인
             TicketDto afterUsage = ticketService.getUserTickets(userId);
-            log.info("📊 After usage - User: {}, Current: {}, Max: {}", 
-                    userId, afterUsage.getCurrentTickets(), afterUsage.getMaxTickets());
+            log.info("📊 After usage - User: {}, Current: {}", 
+                    userId, afterUsage.getCurrentTickets());
             
             return ResponseEntity.ok(Map.of(
                 "testType", "REAL_API_INTEGRATION",
@@ -60,12 +60,10 @@ public class RealApiIntegrationController {
                 "userId", userId,
                 "ticketsUsed", ticketsToUse,
                 "beforeUsage", Map.of(
-                    "current", beforeUsage.getCurrentTickets(),
-                    "max", beforeUsage.getMaxTickets()
+                    "current", beforeUsage.getCurrentTickets()
                 ),
                 "afterUsage", Map.of(
-                    "current", afterUsage.getCurrentTickets(),
-                    "max", afterUsage.getMaxTickets()
+                    "current", afterUsage.getCurrentTickets()
                 ),
                 "eventTriggered", afterUsage.getCurrentTickets() <= 5 ? "LOW_BALANCE_EVENT_LIKELY_SENT" : "NO_EVENT_NEEDED"
             ));

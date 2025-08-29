@@ -278,4 +278,5 @@ public class MissionEventListener {
         // 실제 구현에서는 최종 사용량 계산 및 과금 처리
         log.info("🧾 Mission billing finalized: userId={}, mission={}, trigger={}", 
                 userId, missionTitle, trigger);
-    }\n}"
+    }
+}

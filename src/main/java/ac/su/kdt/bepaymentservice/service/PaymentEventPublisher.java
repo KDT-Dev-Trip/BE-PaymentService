@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
+// 결제 이벤트 발행자
+// 결제 이벤트 발행자는 결제 이벤트를 발행하는 데 사용됩니다.
+// 이벤트는 구독 갱신 실패, 구독 변경, 티켓 잔액 부족 등의 정보를 포함합니다.
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

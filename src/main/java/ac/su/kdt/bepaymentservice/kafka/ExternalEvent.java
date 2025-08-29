@@ -9,6 +9,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+// 외부 이벤트
+// 외부 이벤트는 외부 시스템에서 발생하는 이벤트입니다.
+// 이벤트는 이벤트 ID, 이벤트 유형, 사용자 ID, 팀 ID, 타임스탬프, 데이터 등의 정보를 포함합니다.
+
 @Data
 @Builder
 @NoArgsConstructor

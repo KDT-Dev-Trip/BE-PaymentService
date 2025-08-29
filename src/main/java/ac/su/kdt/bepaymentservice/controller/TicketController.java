@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/tickets")
+@RequestMapping("/api/tickets")
 @RequiredArgsConstructor
 @Slf4j
 public class TicketController {
@@ -42,8 +42,8 @@ public class TicketController {
             Long userIdLong = convertUserIdToLong(userId);
             TicketDto tickets = ticketService.getUserTickets(userIdLong);
             
-            log.info("🎫 Real API: Retrieved tickets for user: {}, current: {}/{}", 
-                    userId, tickets.getCurrentTickets(), tickets.getMaxTickets());
+            log.info("🎫 Real API: Retrieved tickets for user: {}, current: {}", 
+                    userId, tickets.getCurrentTickets());
             
             return ResponseEntity.ok(tickets);
         } catch (Exception e) {

@@ -15,6 +15,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+// 데이터 초기화 서비스
+// 데이터 초기화 서비스는 데이터베이스에 기본 데이터를 초기화하는 데 사용됩니다.
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

@@ -240,7 +240,7 @@ public class TicketService {
             .findByUserIdAndStatusInOrderByCreatedAtDesc(userId, activeStatuses);
         Subscription activeSubscription = activeSubscriptions.isEmpty() ? null : activeSubscriptions.get(0);
         
-        int initialTickets = 0;
+        int initialTickets = 3; // 신규 사용자 환영 티켓
         LocalDateTime nextRefillAt = null;
         
         if (activeSubscription != null) {

@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
+// 결제 구독 변경 이벤트
+// 결제 구독 변경 이벤트는 사용자가 구독을 변경할 때 발생하는 이벤트입니다.
+// 이벤트는 변경된 구독 정보, 변경 시간, 변경 이유 등의 정보를 포함합니다.
+
 public record PaymentSubscriptionChangedEventDTO(
     @JsonProperty("event_type")
     String eventType,

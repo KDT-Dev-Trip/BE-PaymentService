@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+// 구독 정보 DTO
+// 구독 정보 DTO는 구독 정보를 전달하는 데 사용됩니다.
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

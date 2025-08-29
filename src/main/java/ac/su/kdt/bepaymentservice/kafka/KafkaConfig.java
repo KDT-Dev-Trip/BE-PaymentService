@@ -13,6 +13,9 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
+// Kafka 설정
+// Kafka 설정은 Kafka 토픽을 생성하고, 프로듀서와 컨슈머를 설정하는 데 사용됩니다.
+
 @Configuration
 public class KafkaConfig {
     

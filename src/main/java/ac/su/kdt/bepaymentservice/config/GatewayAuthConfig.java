@@ -36,13 +36,24 @@ public class GatewayAuthConfig {
                 // Gateway에서 전달된 사용자 정보 추출
                 String userId = request.getHeader("X-User-Id");
                 String userEmail = request.getHeader("X-User-Email");
+                String userRole = request.getHeader("X-User-Role");
+                String gatewayRoute = request.getHeader("X-Gateway-Route");
                 
-                if (userId != null && userEmail != null) {
-                    // 사용자 정보를 request attribute에 저장
-                    request.setAttribute("gateway.user.id", userId);
-                    request.setAttribute("gateway.user.email", userEmail);
+                if (gatewayRoute != null) {
+                    log.info("Gateway request detected - Route: {}, User: {}, Email: {}, Role: {}", 
+                            gatewayRoute, userId, userEmail, userRole);
                     
-                    log.debug("Gateway authentication - User ID: {}, Email: {}", userId, userEmail);
+                    // 헤더 정보를 request attributes에 저장하여 컨트롤러에서 사용할 수 있게 함
+                    if (userId != null) {
+                        request.setAttribute("gateway.user.id", userId);
+                    }
+                    if (userEmail != null) {
+                        request.setAttribute("gateway.user.email", userEmail);
+                    }
+                    if (userRole != null) {
+                        request.setAttribute("gateway.user.role", userRole);
+                    }
+                    request.setAttribute("gateway.authenticated", true);
                 } else {
                     log.debug("No gateway authentication headers found");
                 }

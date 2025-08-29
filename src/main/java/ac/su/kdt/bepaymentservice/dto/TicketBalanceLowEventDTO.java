@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
+// 티켓 잔액 부족 이벤트
+// 티켓 잔액 부족 이벤트는 사용자가 티켓을 사용할 때 잔액이 부족할 때 발생하는 이벤트입니다.
+// 이벤트는 잔액, 임계값, 예상 소진 날짜, 권장 충전량 등의 정보를 포함합니다.
+
 public record TicketBalanceLowEventDTO(
     @JsonProperty("event_type")
     String eventType,

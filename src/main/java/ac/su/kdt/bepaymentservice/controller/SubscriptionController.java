@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/subscriptions")
+@RequestMapping("/api/subscriptions")
 @RequiredArgsConstructor
 @Slf4j
 public class SubscriptionController {
@@ -25,7 +25,7 @@ public class SubscriptionController {
     @PostMapping
     public ResponseEntity<SubscriptionDto> createSubscription(
             @RequestParam String userId,
-            @Valid @RequestBody CreateSubscriptionRequest request) {
+            @RequestBody CreateSubscriptionRequest request) {
         try {
             // String userId를 Long으로 변환하여 request에 설정
             Long userIdLong = convertUserIdToLong(userId);
@@ -49,7 +49,7 @@ public class SubscriptionController {
     @PostMapping("/checkout")
     public ResponseEntity<Map<String, String>> createCheckoutSession(
             @RequestParam String userId,
-            @Valid @RequestBody CreateSubscriptionRequest request) {
+            @RequestBody CreateSubscriptionRequest request) {
         try {
             // String userId를 Long으로 변환하여 request에 설정
             Long userIdLong = convertUserIdToLong(userId);

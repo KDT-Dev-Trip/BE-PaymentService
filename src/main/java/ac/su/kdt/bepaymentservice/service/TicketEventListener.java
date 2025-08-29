@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+// 티켓 이벤트 리스너
+// 티켓 이벤트 리스너는 티켓 이벤트를 처리하는 데 사용됩니다.
+// 이벤트는 사용자 등록, 사용자 로그인, 사용자 로그아웃, 사용자 프로필 업데이트, 사용자 프로필 이미지 변경, 사용자 설정 변경, 팀 생성, 팀 멤버 추가, 팀 동기화 등의 정보를 포함합니다.
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

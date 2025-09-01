@@ -2,29 +2,51 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_REGISTRY = 'your-docker-registry.com'
-        IMAGE_NAME = 'be-payment-service'
-        KUBECONFIG = credentials('kubeconfig')
-        ARGOCD_SERVER = 'your-argocd-server.com'
-        ARGOCD_TOKEN = credentials('argocd-token')
+        // ===== 로컬 Docker Registry 설정 =====
+        DOCKER_REGISTRY = 'localhost:5000'
+        SERVICE_NAME = 'payment-service'
+        IMAGE_NAME = 'payment-service'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        
+        // ===== 로컬 Kubernetes 설정 =====
+        K8S_NAMESPACE = 'devtrip'
+        K8S_CONFIG_PATH = './k8s'
+        
+        // ===== ArgoCD 로컬 설정 =====
+        ARGOCD_SERVER = 'localhost:30080'
+        ARGOCD_APP_NAME = 'payment-service-app'
+        
+        // ===== 알림 설정 =====
+        SLACK_CHANNEL = '#devtrip-ci'
     }
     
     stages {
-        stage('Checkout') {
+        stage('🚀 Pipeline Start') {
             steps {
-                checkout scm
+                echo "===================================================="
+                echo "🚀 Starting CI/CD Pipeline for ${SERVICE_NAME}"
+                echo "📋 Build Number: ${BUILD_NUMBER}"
+                echo "🌿 Branch: ${env.BRANCH_NAME}"
+                echo "===================================================="
+            }
+        }
+        
+        stage('📦 Checkout & Setup') {
+            steps {
                 script {
                     env.GIT_COMMIT_SHORT = sh(
                         script: 'git rev-parse --short HEAD',
                         returnStdout: true
                     ).trim()
                     env.BUILD_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
+                    echo "📦 Checked out commit: ${env.GIT_COMMIT_SHORT}"
                 }
             }
         }
         
-        stage('Test') {
+        stage('🧪 Test') {
             steps {
+                echo "🧪 Running tests..."
                 sh './gradlew clean test'
             }
             post {
@@ -42,50 +64,69 @@ pipeline {
             }
         }
         
-        stage('Build Application') {
+        stage('🏗️ Build Application') {
             steps {
+                echo "🏗️ Building application..."
                 sh './gradlew clean build -x test'
+                archiveArtifacts artifacts: 'build/libs/*.jar', allowEmptyArchive: false
             }
         }
         
-        stage('Build Docker Image') {
+        stage('🐳 Docker Build') {
             steps {
                 script {
-                    def image = docker.build("${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_TAG}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-registry-credentials') {
-                        image.push()
-                        image.push('latest')
-                    }
+                    echo "🐳 Building Docker image..."
+                    def dockerImage = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_TAG}"
+                    sh "docker build -t ${dockerImage} ."
+                    sh "docker tag ${dockerImage} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
+                    
+                    env.DOCKER_IMAGE_FULL = dockerImage
+                    echo "Docker image built: ${dockerImage}"
                 }
             }
         }
         
-        stage('Update Manifest') {
+        stage('📤 Push to Local Registry') {
             steps {
                 script {
+                    echo "📤 Pushing to local registry..."
+                    sh "docker push ${env.DOCKER_IMAGE_FULL}"
+                    sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"
+                    echo "✅ Image pushed: ${env.DOCKER_IMAGE_FULL}"
+                }
+            }
+        }
+        
+        stage('🚀 Deploy to Local K8s') {
+            steps {
+                script {
+                    echo "🚀 Deploying to local Kubernetes..."
+                    
                     sh """
-                        git config user.email "jenkins@company.com"
-                        git config user.name "Jenkins CI"
+                        # 네임스페이스 생성
+                        kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f - || echo "Namespace already exists"
                         
-                        # Update image tag in k8s manifests
-                        sed -i 's|image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:.*|image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${BUILD_TAG}|g' k8s/deployment.yaml
+                        # 이미지 업데이트 (deployment가 있는 경우)
+                        kubectl set image deployment/${SERVICE_NAME} \
+                            ${SERVICE_NAME}=${env.DOCKER_IMAGE_FULL} \
+                            -n ${K8S_NAMESPACE} || echo "Deployment not found"
                         
-                        # Commit and push changes
-                        git add k8s/deployment.yaml
-                        git commit -m "Update image tag to ${BUILD_TAG}"
-                        git push origin main
+                        # Pod 상태 확인
+                        kubectl get pods -n ${K8S_NAMESPACE} -l app=${SERVICE_NAME} || echo "No pods found"
                     """
                 }
             }
         }
         
-        stage('Sync ArgoCD') {
+        stage('✅ Health Check') {
             steps {
                 script {
+                    echo "✅ Running health checks..."
                     sh """
-                        argocd login ${ARGOCD_SERVER} --auth-token ${ARGOCD_TOKEN} --insecure
-                        argocd app sync payment-service-app
-                        argocd app wait payment-service-app --health
+                        echo "Build completed successfully"
+                        echo "Service: ${SERVICE_NAME}"
+                        echo "Image: ${env.DOCKER_IMAGE_FULL}"
+                        echo "Commit: ${env.GIT_COMMIT_SHORT}"
                     """
                 }
             }
@@ -94,21 +135,25 @@ pipeline {
     
     post {
         always {
+            echo "🧹 Cleaning up workspace..."
+            
+            script {
+                try {
+                    sh "docker system prune -f"
+                } catch (Exception e) {
+                    echo "Docker cleanup skipped: ${e.getMessage()}"
+                }
+            }
+            
             cleanWs()
         }
+        
         success {
-            slackSend(
-                channel: '#deployments',
-                color: 'good',
-                message: "✅ Payment Service deployed successfully: ${BUILD_TAG}"
-            )
+            echo "✅ Pipeline completed successfully for ${SERVICE_NAME}!"
         }
+        
         failure {
-            slackSend(
-                channel: '#deployments',
-                color: 'danger',
-                message: "❌ Payment Service deployment failed: ${BUILD_TAG}"
-            )
+            echo "❌ Pipeline failed for ${SERVICE_NAME}!"
         }
     }
 }

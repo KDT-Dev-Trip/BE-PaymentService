@@ -25,17 +25,13 @@ public class SubscriptionController {
     @PostMapping
     public ResponseEntity<SubscriptionDto> createSubscription(
             @RequestParam String userId,
-            @RequestBody CreateSubscriptionRequest request) {
+            @Valid @RequestBody CreateSubscriptionRequest request) {
         try {
             // String userId를 Long으로 변환하여 request에 설정
             Long userIdLong = convertUserIdToLong(userId);
             request.setUserId(userIdLong);
             
             SubscriptionDto subscription = subscriptionService.createSubscription(request);
-            
-            log.info("💳 Real API: Subscription created successfully for user: {}, plan: {}", 
-                    userId, subscription.getPlan().getPlanName());
-            
             return ResponseEntity.status(HttpStatus.CREATED).body(subscription);
         } catch (IllegalStateException | IllegalArgumentException e) {
             log.error("Error creating subscription: {}", e.getMessage());
@@ -49,22 +45,14 @@ public class SubscriptionController {
     @PostMapping("/checkout")
     public ResponseEntity<Map<String, String>> createCheckoutSession(
             @RequestParam String userId,
-            @RequestBody CreateSubscriptionRequest request) {
+            @Valid @RequestBody CreateSubscriptionRequest request) {
         try {
             // String userId를 Long으로 변환하여 request에 설정
             Long userIdLong = convertUserIdToLong(userId);
             request.setUserId(userIdLong);
             
             String checkoutUrl = subscriptionService.createCheckoutSession(request);
-            
-            log.info("💳 Real API: Checkout session created for user: {}, planId: {}", 
-                    userId, request.getPlanId());
-            
-            return ResponseEntity.ok(Map.of(
-                "checkoutUrl", checkoutUrl,
-                "apiType", "REAL_BUSINESS_API",
-                "operation", "CREATE_CHECKOUT_SESSION"
-            ));
+            return ResponseEntity.ok(Map.of("checkoutUrl", checkoutUrl));
         } catch (UnsupportedOperationException e) {
             log.error("TossPayments checkout not implemented: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
@@ -99,10 +87,6 @@ public class SubscriptionController {
             // String userId를 Long으로 변환하여 서비스 호출
             Long userIdLong = convertUserIdToLong(userId);
             List<SubscriptionDto> subscriptions = subscriptionService.getUserSubscriptions(userIdLong);
-            
-            log.info("💳 Real API: Retrieved {} subscriptions for user: {}", 
-                    subscriptions.size(), userId);
-            
             return ResponseEntity.ok(subscriptions);
         } catch (Exception e) {
             log.error("Error fetching subscriptions for user: {}", userId, e);
@@ -127,10 +111,6 @@ public class SubscriptionController {
         try {
             // cancelSubscription은 subscriptionId와 cancelAtPeriodEnd 파라미터 필요
             SubscriptionDto subscription = subscriptionService.cancelSubscription(subscriptionId, false);
-            
-            log.info("💳 Real API: Subscription cancelled successfully, ID: {}, status: {}", 
-                    subscriptionId, subscription.getStatus());
-            
             return ResponseEntity.ok(subscription);
         } catch (IllegalArgumentException e) {
             log.error("Subscription not found: {}", subscriptionId);
@@ -144,10 +124,36 @@ public class SubscriptionController {
         }
     }
     
+    @GetMapping("/user/{userId}/current-plan")
+    public ResponseEntity<Map<String, Object>> getCurrentPlan(@PathVariable Long userId) {
+        try {
+            log.info("Fetching current plan for userId: {}", userId);
+            
+            // 사용자의 활성 구독 조회
+            List<SubscriptionDto> subscriptions = subscriptionService.getUserSubscriptions(userId);
+            
+            if (subscriptions.isEmpty()) {
+                // 구독이 없는 경우 기본 FREE 플랜 반환
+                Map<String, Object> response = Map.of("planType", "FREE");
+                return ResponseEntity.ok(response);
+            }
+            
+            // 첫 번째 구독의 플랜 타입 반환
+            SubscriptionDto subscription = subscriptions.get(0);
+            Map<String, Object> response = Map.of("planType", subscription.getPlan().getPlanType().name());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error fetching current plan for userId: {}", userId, e);
+            // 에러 시 기본 FREE 플랜 반환
+            Map<String, Object> response = Map.of("planType", "FREE");
+            return ResponseEntity.ok(response);
+        }
+    }
+    
     /**
      * 사용자 ID를 UUID String에서 Long으로 변환
      * UUID의 hash 값을 Long으로 사용하여 기존 서비스와 호환성 유지
-     * 실제 API 호출에서 구독 이벤트들이 자동 발행됨
      */
     private Long convertUserIdToLong(String userId) {
         if (userId == null || userId.trim().isEmpty()) {

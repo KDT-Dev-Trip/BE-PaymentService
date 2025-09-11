@@ -1,5 +1,6 @@
 package ac.su.kdt.bepaymentservice.service;
 
+import ac.su.kdt.bepaymentservice.client.UserServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,7 +13,7 @@ import java.util.Map;
 @Slf4j
 public class MissionEventListener {
     
-    private final TicketService ticketService;
+    private final UserServiceClient userServiceClient;
     private final SubscriptionService subscriptionService;
     private final PaymentEventPublisher paymentEventPublisher;
     
@@ -65,7 +66,7 @@ public class MissionEventListener {
             if ("장시간_비활성".equals(pauseReason) && progressPercent != null && progressPercent >= 50) {
                 // 50% 이상 진행 후 장시간 일시정지된 경우 보상 티켓 지급
                 try {
-                    ticketService.adjustTickets(userId, 1, "미션 장시간 일시정지 보상");
+                    userServiceClient.adjustTickets(userId, 1, "미션 장시간 일시정지 보상");
                     log.info("Compensation ticket granted for extended pause: userId={}", userId);
                 } catch (Exception e) {
                     log.warn("Failed to grant compensation ticket: {}", e.getMessage());
@@ -134,7 +135,7 @@ public class MissionEventListener {
                 try {
                     // 미션 시작시 사용된 티켓 환불
                     String attemptId = (String) eventData.get("attemptId");
-                    ticketService.refundTickets(userId, 1, attemptId != null ? Long.parseLong(attemptId) : null, 
+                    userServiceClient.refundTickets(userId, 1, attemptId != null ? Long.parseLong(attemptId) : null, 
                         "리소스 프로비저닝 실패로 인한 환불");
                     
                     log.info("Ticket refunded due to system failure: userId={}, reason={}", userId, failureReason);
@@ -146,7 +147,7 @@ public class MissionEventListener {
             // 2. 반복 실패시 고객 지원 크레딧 지급
             if (retryAttempt != null && retryAttempt >= 3) {
                 try {
-                    ticketService.adjustTickets(userId, 2, "리소스 프로비저닝 반복 실패 보상");
+                    userServiceClient.adjustTickets(userId, 2, "리소스 프로비저닝 반복 실패 보상");
                     log.info("Compensation credits granted for repeated failures: userId={}", userId);
                 } catch (Exception e) {
                     log.warn("Failed to grant compensation credits: {}", e.getMessage());
@@ -181,7 +182,7 @@ public class MissionEventListener {
                     // 성공적 완료시 보너스 티켓 지급
                     int bonusTickets = calculateCompletionBonus(userId, missionTitle);
                     if (bonusTickets > 0) {
-                        ticketService.adjustTickets(userId, bonusTickets, "미션 완료 보너스");
+                        userServiceClient.adjustTickets(userId, bonusTickets, "미션 완료 보너스");
                         log.info("Mission completion bonus granted: userId={}, bonus={} tickets", userId, bonusTickets);
                     }
                 } catch (Exception e) {
@@ -193,7 +194,7 @@ public class MissionEventListener {
             if ("USER_REQUESTED".equals(cleanupTrigger)) {
                 // 사용자가 조기에 미션 종료시 잔여 시간에 대한 부분 크레딧
                 try {
-                    ticketService.adjustTickets(userId, 1, "미션 조기 종료 잔여 시간 크레딧");
+                    userServiceClient.adjustTickets(userId, 1, "미션 조기 종료 잔여 시간 크레딧");
                     log.info("Early termination credit granted: userId={}", userId);
                 } catch (Exception e) {
                     log.warn("Failed to grant early termination credit: {}", e.getMessage());

@@ -2,7 +2,7 @@ package ac.su.kdt.bepaymentservice.controller;
 
 import org.junit.jupiter.api.Test;
 
-// TODO: Re-enable when infrastructure is properly set up for testing
+// Infrastructure setup needed for comprehensive testing
 /*
 import ac.su.kdt.bepaymentservice.dto.TicketDto;
 import ac.su.kdt.bepaymentservice.service.TicketService;
@@ -67,6 +67,6 @@ class TicketControllerTest {
         // Temporary simplified test - original ticket tests commented above
         org.junit.jupiter.api.Assertions.assertTrue(true);
         
-        // TODO: Restore original ticket management tests when infrastructure is ready
+        // Original ticket management tests to be restored when infrastructure is ready
     }
 }

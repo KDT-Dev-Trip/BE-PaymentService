@@ -1,16 +1,20 @@
 package ac.su.kdt.bepaymentservice.controller;
 
+import ac.su.kdt.bepaymentservice.client.UserServiceClient;
 import ac.su.kdt.bepaymentservice.dto.CreateSubscriptionRequest;
 import ac.su.kdt.bepaymentservice.dto.SubscriptionDto;
-import ac.su.kdt.bepaymentservice.dto.TicketDto;
 import ac.su.kdt.bepaymentservice.service.SubscriptionService;
-import ac.su.kdt.bepaymentservice.service.TicketService;
 import ac.su.kdt.bepaymentservice.service.TossPaymentsService;
-import ac.su.kdt.bepaymentservice.toss.dto.*;
+import ac.su.kdt.bepaymentservice.toss.dto.PaymentResponse;
+import ac.su.kdt.bepaymentservice.toss.dto.AutoPaymentRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 import java.util.List;
@@ -25,7 +29,7 @@ import java.util.List;
 @Slf4j
 public class RealApiIntegrationController {
 
-    private final TicketService ticketService;
+    private final UserServiceClient userServiceClient;
     private final SubscriptionService subscriptionService;
     private final TossPaymentsService tossPaymentsService;
 
@@ -41,17 +45,17 @@ public class RealApiIntegrationController {
         
         try {
             // 1. 사용 전 티켓 상태 확인
-            TicketDto beforeUsage = ticketService.getUserTickets(userId);
+            Map<String, Object> beforeUsage = userServiceClient.getUserTickets(userId);
             log.info("📊 Before usage - User: {}, Current: {}", 
-                    userId, beforeUsage.getCurrentTickets());
+                    userId, beforeUsage != null ? beforeUsage.get("currentTickets") : "unknown");
             
             // 2. 실제 티켓 사용 (이 과정에서 잔액 부족 이벤트가 자동 발행될 수 있음)
-            boolean success = ticketService.useTickets(userId, ticketsToUse, 999L, "Real API integration test mission");
+            boolean success = userServiceClient.useTickets(userId, ticketsToUse, 999L, "Real API integration test mission");
             
             // 3. 사용 후 티켓 상태 확인
-            TicketDto afterUsage = ticketService.getUserTickets(userId);
+            Map<String, Object> afterUsage = userServiceClient.getUserTickets(userId);
             log.info("📊 After usage - User: {}, Current: {}", 
-                    userId, afterUsage.getCurrentTickets());
+                    userId, afterUsage != null ? afterUsage.get("currentTickets") : "unknown");
             
             return ResponseEntity.ok(Map.of(
                 "testType", "REAL_API_INTEGRATION",
@@ -60,12 +64,12 @@ public class RealApiIntegrationController {
                 "userId", userId,
                 "ticketsUsed", ticketsToUse,
                 "beforeUsage", Map.of(
-                    "current", beforeUsage.getCurrentTickets()
+                    "current", beforeUsage != null ? beforeUsage.get("currentTickets") : 0
                 ),
                 "afterUsage", Map.of(
-                    "current", afterUsage.getCurrentTickets()
+                    "current", afterUsage != null ? afterUsage.get("currentTickets") : 0
                 ),
-                "eventTriggered", afterUsage.getCurrentTickets() <= 5 ? "LOW_BALANCE_EVENT_LIKELY_SENT" : "NO_EVENT_NEEDED"
+                "eventTriggered", (afterUsage != null && (Integer)afterUsage.get("currentTickets") <= 5) ? "LOW_BALANCE_EVENT_LIKELY_SENT" : "NO_EVENT_NEEDED"
             ));
             
         } catch (Exception e) {
@@ -203,8 +207,8 @@ public class RealApiIntegrationController {
         try {
             // 1. 티켓 사용으로 잔액 부족 이벤트 트리거
             log.info("Step 1: Testing real ticket usage...");
-            boolean ticketUsageSuccess = ticketService.useTickets(userId, 10, 1001L, "Full integration test");
-            TicketDto userTickets = ticketService.getUserTickets(userId);
+            boolean ticketUsageSuccess = userServiceClient.useTickets(userId, 10, 1001L, "Full integration test");
+            Map<String, Object> userTickets = userServiceClient.getUserTickets(userId);
             
             Thread.sleep(1000); // 이벤트 처리 대기
             
@@ -226,7 +230,7 @@ public class RealApiIntegrationController {
                 "steps", Map.of(
                     "step1_ticket_usage", Map.of(
                         "success", ticketUsageSuccess,
-                        "remainingTickets", userTickets.getCurrentTickets(),
+                        "remainingTickets", userTickets != null ? userTickets.get("currentTickets") : 0,
                         "eventTriggered", "ticket-balance-low"
                     ),
                     "step2_renewal_failure", Map.of(

@@ -18,6 +18,11 @@ public class TossPaymentsController {
     
     private final TossPaymentsService tossPaymentsService;
     
+    @GetMapping("/health")
+    public ResponseEntity<String> healthCheck() {
+        return ResponseEntity.ok("Payment Service is running");
+    }
+    
     @PostMapping("/billing/issue")
     public ResponseEntity<BillingResponse> issueBillingKey(@RequestBody BillingKeyRequest request) {
         log.info("Billing key issue request received for customerKey: {}", request.getCustomerKey());

@@ -1,12 +1,16 @@
 package ac.su.kdt.bepaymentservice.controller;
 
+import ac.su.kdt.bepaymentservice.client.UserServiceClient;
 import ac.su.kdt.bepaymentservice.service.PaymentEventPublisher;
 import ac.su.kdt.bepaymentservice.service.SubscriptionService;
-import ac.su.kdt.bepaymentservice.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
@@ -22,7 +26,7 @@ public class PaymentEventTestController {
 
     private final PaymentEventPublisher paymentEventPublisher;
     private final SubscriptionService subscriptionService;
-    private final TicketService ticketService;
+    private final UserServiceClient userServiceClient;
 
     /**
      * 구독 갱신 실패 이벤트 테스트
@@ -90,7 +94,7 @@ public class PaymentEventTestController {
         
         try {
             // 티켓 사용을 통한 잔액 부족 이벤트 시뮬레이션
-            boolean success = ticketService.useTickets(userId, ticketsToUse, 123L, "Test mission attempt");
+            boolean success = userServiceClient.useTickets(userId, ticketsToUse, 123L, "Test mission attempt");
             
             return ResponseEntity.ok(Map.of(
                 "message", "Ticket usage attempted (may trigger low balance event)",

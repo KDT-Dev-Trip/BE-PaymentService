@@ -41,10 +41,6 @@ public class TicketController {
             // String userId를 Long으로 변환하여 서비스 호출
             Long userIdLong = convertUserIdToLong(userId);
             TicketDto tickets = ticketService.getUserTickets(userIdLong);
-            
-            log.info("🎫 Real API: Retrieved tickets for user: {}, current: {}", 
-                    userId, tickets.getCurrentTickets());
-            
             return ResponseEntity.ok(tickets);
         } catch (Exception e) {
             log.error("Error fetching tickets for user: {}", userId, e);
@@ -79,22 +75,15 @@ public class TicketController {
             
             if (success) {
                 TicketDto updatedTickets = ticketService.getUserTickets(userIdLong);
-                
-                log.info("🎫 Real API: Tickets used successfully for user: {}, remaining: {}", 
-                        userId, updatedTickets.getCurrentTickets());
-                
                 return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Tickets used successfully",
-                    "tickets", updatedTickets,
-                    "apiType", "REAL_BUSINESS_API",
-                    "eventTriggered", "Automatic low balance event check performed"
+                    "tickets", updatedTickets
                 ));
             } else {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "Not enough tickets available",
-                    "apiType", "REAL_BUSINESS_API"
+                    "message", "Not enough tickets available"
                 ));
             }
         } catch (Exception e) {
@@ -132,15 +121,10 @@ public class TicketController {
             ticketService.refundTickets(userIdLong, amount, attemptId, reason);
             TicketDto updatedTickets = ticketService.getUserTickets(userIdLong);
             
-            log.info("🎫 Real API: Tickets refunded successfully for user: {}, new total: {}", 
-                    userId, updatedTickets.getCurrentTickets());
-            
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Tickets refunded successfully",
-                "tickets", updatedTickets,
-                "apiType", "REAL_BUSINESS_API",
-                "operation", "TICKET_REFUND"
+                "tickets", updatedTickets
             ));
         } catch (Exception e) {
             log.error("Error refunding tickets for user: {}", userId, e);
@@ -176,15 +160,10 @@ public class TicketController {
             ticketService.adjustTickets(userIdLong, adjustment, reason);
             TicketDto updatedTickets = ticketService.getUserTickets(userIdLong);
             
-            log.info("🎫 Real API: Tickets adjusted successfully for user: {}, adjustment: {}, new total: {}", 
-                    userId, adjustment, updatedTickets.getCurrentTickets());
-            
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Tickets adjusted successfully",
-                "tickets", updatedTickets,
-                "apiType", "REAL_BUSINESS_API",
-                "operation", "TICKET_ADJUSTMENT"
+                "tickets", updatedTickets
             ));
         } catch (Exception e) {
             log.error("Error adjusting tickets for user: {}", userId, e);
@@ -199,14 +178,9 @@ public class TicketController {
     public ResponseEntity<Map<String, String>> processTicketRefills() {
         try {
             ticketService.processTicketRefills();
-            
-            log.info("🎫 Real API: Bulk ticket refills processed successfully");
-            
             return ResponseEntity.ok(Map.of(
                 "success", "true",
-                "message", "Ticket refills processed successfully",
-                "apiType", "REAL_BUSINESS_API",
-                "operation", "BULK_TICKET_REFILL"
+                "message", "Ticket refills processed successfully"
             ));
         } catch (Exception e) {
             log.error("Error processing ticket refills", e);
@@ -220,7 +194,6 @@ public class TicketController {
     /**
      * 사용자 ID를 UUID String에서 Long으로 변환
      * UUID의 hash 값을 Long으로 사용하여 기존 서비스와 호환성 유지
-     * 실제 API 호출에서 이벤트 시스템과 자동 연동됨
      */
     private Long convertUserIdToLong(String userId) {
         if (userId == null || userId.trim().isEmpty()) {

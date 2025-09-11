@@ -17,6 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// 티켓 서비스
+// 티켓 서비스는 티켓 관련 기능을 제공하는 데 사용됩니다.
+// 이벤트는 티켓 사용, 티켓 환불, 티켓 충전 등의 정보를 포함합니다.
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -240,7 +244,7 @@ public class TicketService {
             .findByUserIdAndStatusInOrderByCreatedAtDesc(userId, activeStatuses);
         Subscription activeSubscription = activeSubscriptions.isEmpty() ? null : activeSubscriptions.get(0);
         
-        int initialTickets = 3; // 신규 사용자 환영 티켓
+        int initialTickets = 3;
         LocalDateTime nextRefillAt = null;
         
         if (activeSubscription != null) {

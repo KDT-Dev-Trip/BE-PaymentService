@@ -2,7 +2,7 @@ package ac.su.kdt.bepaymentservice.controller;
 
 import org.junit.jupiter.api.Test;
 
-// TODO: Re-enable when infrastructure (DB, Kafka, MockMvc) is properly set up for testing
+// Infrastructure (DB, Kafka, MockMvc) setup needed for comprehensive testing
 /*
 import ac.su.kdt.bepaymentservice.dto.CreateSubscriptionRequest;
 import ac.su.kdt.bepaymentservice.dto.SubscriptionDto;
@@ -85,7 +85,7 @@ class SubscriptionControllerTest {
         // Temporary simplified test - original comprehensive tests commented above
         org.junit.jupiter.api.Assertions.assertTrue(true);
         
-        // TODO: Restore original tests:
+        // Original comprehensive tests to be restored when infrastructure is ready:
         // - createSubscription_Success()
         // - createSubscription_InvalidRequest_Returns400()  
         // - createSubscription_AlreadyActiveSubscription_Returns400()

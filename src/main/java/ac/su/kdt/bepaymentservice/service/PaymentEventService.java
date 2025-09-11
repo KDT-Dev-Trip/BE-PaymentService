@@ -155,6 +155,25 @@ public class PaymentEventService {
         log.info("Published payment succeeded event for transaction: {}", transaction.getId());
     }
     
+    public void publishSubscriptionCanceled(Subscription subscription) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("subscriptionId", subscription.getId());
+        data.put("canceledAt", LocalDateTime.now());
+        data.put("status", subscription.getStatus().name());
+        
+        PaymentEvent event = PaymentEvent.builder()
+            .eventId(UUID.randomUUID().toString())
+            .eventType(PaymentEvent.EventType.SUBSCRIPTION_CANCELLED.name())
+            .timestamp(LocalDateTime.now())
+            .userId(subscription.getUserId())
+            .teamId(subscription.getTeamId())
+            .data(data)
+            .build();
+        
+        kafkaTemplate.send(subscriptionEventsTopic, event);
+        log.info("Published subscription canceled event for user: {}", subscription.getUserId());
+    }
+    
     public void publishPaymentFailed(PaymentTransaction transaction) {
         Map<String, Object> data = new HashMap<>();
         data.put("transactionId", transaction.getId());

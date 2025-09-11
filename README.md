@@ -1,237 +1,257 @@
-# DevOps 교육 플랫폼 - 결제 서비스 (Payment Service)
+# Payment Service
 
-이 서비스는 구독 기반 결제 시스템과 티켓 관리 시스템을 제공하는 마이크로서비스입니다.
+![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.x-6DB33F?style=flat-square&logo=spring-boot&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Stripe](https://img.shields.io/badge/Stripe-API-008CDD?style=flat-square&logo=stripe&logoColor=white)
+![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.6-231F20?style=flat-square&logo=apache-kafka&logoColor=white)
 
-## 주요 기능
-
-- **구독 플랜 관리**: Economy, Business, First Class 세 가지 플랜
-- **Stripe 결제 연동**: 월간/연간 구독 결제 처리
-- **티켓 시스템**: 미션 수행을 위한 티켓 관리 및 자동 충전
-- **웹훅 처리**: Stripe 이벤트 실시간 처리
-- **Kafka 이벤트 발행**: 결제 및 구독 관련 이벤트 발행
+DevTrip 플랫폼의 **결제 및 구독 관리**를 담당하는 마이크로서비스입니다. Stripe 연동을 통한 구독/티켓 결제, 결제 이력 관리, Webhook 처리를 제공합니다.
 
 ## 기술 스택
 
-- **Framework**: Spring Boot 3.5.4
-- **Database**: MySQL 8.0
-- **Payment**: Stripe
-- **Messaging**: Apache Kafka
-- **ORM**: JPA/Hibernate
-- **Language**: Java 17
+### Backend Framework
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.x-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![Spring Data JPA](https://img.shields.io/badge/Spring%20Data%20JPA-3.x-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Gradle](https://img.shields.io/badge/Gradle-8.5-02303A?style=for-the-badge&logo=gradle&logoColor=white)
 
-## 설정 요구사항
+### Database & External APIs
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Stripe](https://img.shields.io/badge/Stripe-API%20v2023-008CDD?style=for-the-badge&logo=stripe&logoColor=white)
 
-### 환경 변수
+### Messaging & Monitoring
+![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-3.6-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
+
+## 주요 기능
+
+- **구독 관리**: 월간/연간 구독 플랜 관리
+- **티켓 결제**: 일회성 미션 티켓 구매
+- **Stripe 연동**: 안전한 결제 처리 및 Webhook 관리
+- **결제 이력**: 모든 거래 내역 추적 및 관리
+- **자동 갱신**: 구독 자동 갱신 및 실패 처리
+
+## 로컬 실행
+
+### 환경 설정
+```bash
+cd BE-payment-service
+
+# 환경변수 설정
+cp .env.example .env
+```
+
+**필수 환경변수:**
 ```bash
 # Stripe 설정
-STRIPE_SECRET_KEY=sk_test_your_secret_key
-STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
-# 데이터베이스 설정
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=devops_platform_payment
-DB_USERNAME=root
-DB_PASSWORD=password
+# Database
+DB_USERNAME=devtrip
+DB_PASSWORD=your_password
+DB_NAME=devtrip-payment
 
-# Kafka 설정
+# Kafka
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 ```
 
 ### 데이터베이스 설정
-MySQL 8.0+가 필요하며, 애플리케이션 시작 시 자동으로 테이블이 생성됩니다.
-
 ```sql
-CREATE DATABASE devops_platform_payment CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE `devtrip-payment` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-## 구독 플랜
-
-### Economy Class (이코노미 클래스)
-- **가격**: ₩29,000/월, ₩290,000/년
-- **팀 멤버**: 최대 2명
-- **월간 시도**: 10회
-- **티켓 제한**: 3개
-- **티켓 충전**: 24시간마다 3개
-
-### Business Class (비즈니스 클래스)
-- **가격**: ₩79,000/월, ₩790,000/년
-- **팀 멤버**: 최대 6명
-- **월간 시도**: 50회
-- **티켓 제한**: 8개
-- **티켓 충전**: 12시간마다 5개
-
-### First Class (퍼스트 클래스)
-- **가격**: ₩199,000/월, ₩1,990,000/년
-- **팀 멤버**: 최대 20명
-- **월간 시도**: 200회
-- **티켓 제한**: 15개
-- **티켓 충전**: 8시간마다 10개
+### 서비스 실행
+```bash
+# 빌드 및 실행
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
 
 ## API 엔드포인트
 
 ### 구독 관리
-```
-GET    /api/v1/subscription-plans           # 활성 플랜 목록 조회
-GET    /api/v1/subscription-plans/{id}      # 특정 플랜 조회
-POST   /api/v1/subscriptions                # 구독 생성
-POST   /api/v1/subscriptions/checkout       # Stripe 결제 페이지 생성
-GET    /api/v1/subscriptions/users/{userId} # 사용자 구독 내역
-GET    /api/v1/subscriptions/users/{userId}/active # 활성 구독 조회
-POST   /api/v1/subscriptions/{id}/cancel    # 구독 취소
-```
+| Method | Endpoint | 설명 | 인증 |
+|--------|----------|------|------|
+| `GET` | `/api/v1/subscriptions/plans` | 구독 플랜 목록 | ❌ |
+| `POST` | `/api/v1/subscriptions` | 구독 생성 | ✅ |
+| `GET` | `/api/v1/subscriptions/me` | 내 구독 조회 | ✅ |
+| `PUT` | `/api/v1/subscriptions/{id}/cancel` | 구독 취소 | ✅ |
+| `POST` | `/api/v1/subscriptions/{id}/resume` | 구독 재개 | ✅ |
 
 ### 티켓 관리
+| Method | Endpoint | 설명 | 인증 |
+|--------|----------|------|------|
+| `GET` | `/api/v1/tickets/balance` | 티켓 잔량 조회 | ✅ |
+| `POST` | `/api/v1/tickets/purchase` | 티켓 구매 | ✅ |
+| `POST` | `/api/v1/tickets/use` | 티켓 사용 | ✅ |
+| `GET` | `/api/v1/tickets/history` | 사용 이력 | ✅ |
+
+### 결제 관리
+| Method | Endpoint | 설명 | 인증 |
+|--------|----------|------|------|
+| `GET` | `/api/v1/payments/history` | 결제 이력 | ✅ |
+| `GET` | `/api/v1/payments/{id}` | 결제 상세 | ✅ |
+| `POST` | `/api/v1/payments/refund` | 환불 요청 | ✅ |
+
+### Webhook
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `POST` | `/api/v1/webhooks/stripe` | Stripe Webhook |
+
+### 시스템
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `GET` | `/api/health` | 헬스체크 |
+| `GET` | `/actuator/prometheus` | 메트릭 |
+
+## 설정
+
+### 구독 플랜 설정
+```yaml
+payment:
+  plans:
+    free:
+      name: "Free Plan"
+      price: 0
+      missions-per-month: 5
+      concurrent-sessions: 1
+    pro:
+      name: "Pro Plan"  
+      monthly-price: 19.99
+      yearly-price: 199.99
+      missions-per-month: 50
+      concurrent-sessions: 3
+    team:
+      name: "Team Plan"
+      monthly-price: 49.99
+      yearly-price: 499.99
+      missions-per-month: 200
+      concurrent-sessions: 10
 ```
-GET    /api/v1/tickets/users/{userId}       # 사용자 티켓 조회
-POST   /api/v1/tickets/users/{userId}/use   # 티켓 사용
-POST   /api/v1/tickets/users/{userId}/refund # 티켓 환불
-POST   /api/v1/tickets/users/{userId}/adjust # 티켓 조정 (관리자)
-POST   /api/v1/tickets/refill               # 티켓 자동 충전 (스케줄러)
+
+### Stripe Webhook 설정
+```yaml
+stripe:
+  webhook:
+    events:
+      - invoice.payment_succeeded
+      - invoice.payment_failed  
+      - customer.subscription.deleted
+      - customer.subscription.updated
 ```
 
-### 웹훅
-```
-POST   /api/v1/webhooks/stripe              # Stripe 웹훅 처리
-```
+## 테스트
 
-## 사용 예시
-
-### 1. 구독 생성 요청
-```json
-POST /api/v1/subscriptions
-{
-  "userId": 1,
-  "planId": 1,
-  "billingCycle": "MONTHLY"
-}
-```
-
-### 2. Stripe 결제 페이지 생성
-```json
-POST /api/v1/subscriptions/checkout
-{
-  "userId": 1,
-  "planId": 1,
-  "billingCycle": "MONTHLY",
-  "successUrl": "https://yourapp.com/success",
-  "cancelUrl": "https://yourapp.com/cancel"
-}
-```
-
-### 3. 티켓 사용
-```json
-POST /api/v1/tickets/users/1/use?amount=1&attemptId=123&reason=mission_start
-```
-
-## Kafka 이벤트
-
-다음 이벤트들이 Kafka로 발행됩니다:
-
-- `SUBSCRIPTION_CREATED`: 구독 생성됨
-- `SUBSCRIPTION_CANCELLED`: 구독 취소됨
-- `SUBSCRIPTION_EXPIRED`: 구독 만료됨
-- `PAYMENT_SUCCEEDED`: 결제 성공
-- `PAYMENT_FAILED`: 결제 실패
-- `TICKETS_USED`: 티켓 사용됨
-- `TICKETS_REFILLED`: 티켓 충전됨
-
-## 실행 방법
-
-### 1. 로컬 개발 환경
 ```bash
-# 의존성 설치
-./gradlew build
+# 단위 테스트
+./gradlew test
 
-# 애플리케이션 실행
-./gradlew bootRun
+# Stripe Mock Server를 이용한 통합 테스트
+./gradlew integrationTest -Dspring.profiles.active=test
+
+# 테스트 커버리지
+./gradlew jacocoTestReport
 ```
 
-### 2. Docker 실행
-```bash
-# Docker 이미지 빌드
-docker build -t payment-service .
-
-# 컨테이너 실행
-docker run -p 8083:8083 \
-  -e STRIPE_SECRET_KEY=your_key \
-  -e DB_HOST=your_db_host \
-  payment-service
+### Stripe 테스트 카드
+```
+성공: 4242 4242 4242 4242
+실패: 4000 0000 0000 0002
+3D Secure: 4000 0025 0000 3155
 ```
 
 ## 모니터링
 
-애플리케이션은 다음 헬스체크 엔드포인트를 제공합니다:
-- `/actuator/health`: 애플리케이션 상태
-- `/actuator/metrics`: 메트릭 정보
-- `/actuator/info`: 애플리케이션 정보
+### 주요 메트릭
+- **결제 성공률**: `payment_success_rate`
+- **구독 전환율**: `subscription_conversion_rate` 
+- **월간 반복 수익**: `monthly_recurring_revenue`
+- **고객 생존기간 가치**: `customer_lifetime_value`
 
-## 테스트
+### 알림 설정
+- 결제 실패율 5% 초과
+- Webhook 처리 실패
+- 구독 취소율 급증
+- API 응답시간 2초 초과
 
-### 테스트 실행
-```bash
-# 전체 테스트 실행
-./gradlew test
+## 보안
 
-# 특정 테스트 클래스 실행
-./gradlew test --tests "SubscriptionServiceTest"
+### 결제 보안 체크리스트
+- [ ] Stripe Secret Key 환경변수 관리
+- [ ] Webhook 서명 검증 구현
+- [ ] PCI DSS 준수 (Stripe 위임)
+- [ ] 개인정보 암호화 저장
+- [ ] API Rate Limiting 적용
+- [ ] 거래 이력 감사 로그
 
-# 통합 테스트만 실행
-./gradlew test --tests "*IntegrationTest"
-
-# 테스트 커버리지 리포트 생성
-./gradlew test jacocoTestReport
+### Webhook 보안
+```java
+// Stripe Webhook 서명 검증
+@PostMapping("/webhooks/stripe")
+public ResponseEntity<String> handleWebhook(
+    @RequestBody String payload,
+    @RequestHeader("Stripe-Signature") String signature) {
+    
+    if (!stripeWebhookValidator.isValidSignature(payload, signature)) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    // 처리 로직...
+}
 ```
 
-### 테스트 구조
-프로젝트는 TDD 방식으로 개발되었으며 다음과 같은 테스트들을 포함합니다:
+## 의존성 서비스
 
-#### 단위 테스트 (Unit Tests)
-- **SubscriptionServiceTest**: 구독 서비스 로직 테스트
-- **TicketServiceTest**: 티켓 관리 서비스 로직 테스트
-- **StripeServiceTest**: Stripe API 연동 테스트
-- **PaymentEventServiceTest**: Kafka 이벤트 발행 테스트
+### 필수 의존성
+- **MySQL**: 결제/구독 데이터 저장
+- **Stripe API**: 결제 처리
+- **Kafka**: 결제 완료 이벤트 발행
 
-#### 통합 테스트 (Integration Tests)
-- **SubscriptionControllerTest**: 구독 관련 REST API 테스트
-- **TicketControllerTest**: 티켓 관련 REST API 테스트
-- **StripeWebhookControllerTest**: Stripe 웹훅 API 테스트
-- **PaymentServiceIntegrationTest**: 전체 비즈니스 플로우 테스트
+### 연동 서비스
+- **User Management**: 사용자 정보 조회
+- **Authentication**: JWT 토큰 검증
 
-#### 데이터 접근 테스트 (Data Access Tests)
-- **SubscriptionRepositoryTest**: 구독 데이터 접근 테스트
-- **UserTicketRepositoryTest**: 티켓 데이터 접근 테스트
+## 트러블슈팅
 
-#### 메시징 테스트 (Messaging Tests)
-- **PaymentEventServiceTest**: Kafka 이벤트 발행/수신 테스트 (EmbeddedKafka 사용)
+### 일반적인 문제
 
-### 테스트 설정
-- **H2 인메모리 데이터베이스**: 빠른 테스트 실행
-- **EmbeddedKafka**: Kafka 통합 테스트
-- **MockMvc**: REST API 테스트
-- **Testcontainers**: 격리된 테스트 환경 (선택적)
+**1. Stripe Webhook 실패**
+```bash
+# ngrok을 이용한 로컬 테스트
+ngrok http 8081
 
-### 테스트 커버리지
-주요 비즈니스 로직과 API 엔드포인트에 대해 90% 이상의 테스트 커버리지를 목표로 합니다.
+# Stripe Dashboard에서 Webhook URL 업데이트
+# https://your-ngrok-url.ngrok.io/api/v1/webhooks/stripe
+```
 
-## 개발 참고사항
+**2. 결제 처리 지연**
+```bash
+# Kafka Consumer 상태 확인
+curl http://localhost:8081/actuator/health
+```
 
-### Stripe 설정
-1. Stripe 계정에서 API 키 발급
-2. 웹훅 엔드포인트 설정: `https://yourapp.com/api/v1/webhooks/stripe`
-3. 다음 이벤트 구독:
-   - `customer.subscription.created`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_succeeded`
-   - `invoice.payment_failed`
-   - `checkout.session.completed`
+**3. 구독 상태 불일치**
+```java
+// Stripe와 동기화 작업
+@Scheduled(fixedRate = 300000) // 5분마다
+public void syncSubscriptionStatus() {
+    // Stripe API로 실제 상태 조회 후 업데이트
+}
+```
 
-### 데이터베이스 마이그레이션
-JPA Auto DDL이 활성화되어 있어 스키마가 자동 생성됩니다. 
-프로덕션 환경에서는 `spring.jpa.hibernate.ddl-auto=validate`로 설정하세요.
+## 개발 가이드
 
-### 로깅
-구조화된 로깅을 위해 JSON 포맷 사용을 권장합니다.
-주요 이벤트(결제, 구독 변경)는 모두 로그로 기록됩니다.
+### 새로운 결제 방식 추가
+1. `PaymentMethod` enum에 추가
+2. `PaymentProcessor` 인터페이스 구현
+3. 관련 설정 및 테스트 추가
+
+### 새로운 구독 플랜 추가
+1. `SubscriptionPlan` 엔티티 수정
+2. Stripe Product/Price 생성
+3. 프론트엔드 UI 업데이트
+
+## 관련 문서
+- [Stripe 연동 가이드](./docs/STRIPE_INTEGRATION.md)
+- [결제 플로우 다이어그램](./docs/PAYMENT_FLOW.md)
+- [보안 정책](./docs/SECURITY_POLICY.md)
